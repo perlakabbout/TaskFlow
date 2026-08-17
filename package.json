@@ -17,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/perlakabbout/TaskFlow/issues"
   },
-  "homepage": "https://github.com/perlakabbout/TaskFlow#readme"
+  "homepage": "https://github.com/perlakabbout/TaskFlow#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.23.3"
+  }
 }
