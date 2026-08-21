@@ -1,11 +1,16 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import cors from "cors";
 import db from "./db.js";
 
 const app = express();
 const PORT = 3000;
 
+// Allow React frontend to communicate with backend
+app.use(cors());
+
+// Allow Express to read JSON
 app.use(express.json());
 
 
