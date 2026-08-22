@@ -5,12 +5,20 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch("http://localhost:3000/login", {
@@ -27,15 +35,16 @@ function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || "Login failed.");
         return;
       }
 
       localStorage.setItem("token", data.token);
-
       navigate("/dashboard");
     } catch (error) {
-      setError("Could not connect to the server");
+      setError("Could not connect to the server.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,7 +59,6 @@ function Login() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
         </div>
 
@@ -60,11 +68,12 @@ function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
         </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
       </form>
 
       {error && <p>{error}</p>}
