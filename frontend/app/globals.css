@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f7fa;
+  color: #1f2937;
+}
+
+/* Header */
+
+header {
+  background: #111827;
+  color: white;
+  padding: 20px 8%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h2 {
+  margin: 0;
+}
+
+header nav {
+  display: flex;
+  gap: 20px;
+}
+
+header a {
+  color: white;
+  text-decoration: none;
+}
+
+header a:hover {
+  text-decoration: underline;
+}
+
+/* Main content */
+
+main {
+  min-height: calc(100vh - 145px);
+}
+
+/* Landing page */
+
+section {
+  min-height: calc(100vh - 145px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+section h1 {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+section p {
+  font-size: 18px;
+  max-width: 600px;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+section a {
+  background: #111827;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+/* Projects page */
+
+main > h1,
+main > p {
+  margin-left: 8%;
+  margin-right: 8%;
+}
+
+main > h1 {
+  margin-top: 60px;
+}
+
+/* Footer */
+
+footer {
+  background: #111827;
+  color: white;
+  text-align: center;
+  padding: 18px;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  section h1 {
+    font-size: 34px;
+  }
+
+  section p {
+    font-size: 16px;
+  }
+}
