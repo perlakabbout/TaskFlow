@@ -7,8 +7,8 @@ export default function Header() {
 
       <nav>
         <Link href="/">Home</Link>
-        {" | "}
         <Link href="/projects">Projects</Link>
+        <Link href="/tasks">Tasks</Link>
       </nav>
     </header>
   );

@@ -16,8 +16,6 @@ body {
   color: #1f2937;
 }
 
-/* Header */
-
 header {
   background: #111827;
   color: white;
@@ -45,13 +43,10 @@ header a:hover {
   text-decoration: underline;
 }
 
-/* Main content */
-
 main {
   min-height: calc(100vh - 145px);
+  padding: 40px 8%;
 }
-
-/* Landing page */
 
 section {
   min-height: calc(100vh - 145px);
@@ -77,25 +72,28 @@ section p {
 
 section a {
   background: #111827;
-  color: white;
+  color: white !important;
   padding: 12px 24px;
   border-radius: 6px;
   text-decoration: none;
+  display: inline-block;
 }
 
-/* Projects page */
-
-main > h1,
-main > p {
-  margin-left: 8%;
-  margin-right: 8%;
+section a:hover {
+  opacity: 0.9;
 }
 
-main > h1 {
-  margin-top: 60px;
+main > div {
+  background: white;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
 }
 
-/* Footer */
+main a {
+  color: #111827;
+  font-weight: bold;
+}
 
 footer {
   background: #111827;
@@ -104,12 +102,31 @@ footer {
   padding: 18px;
 }
 
-/* Mobile */
+button,
+a {
+  transition: 0.2s;
+}
+
+button:focus,
+a:focus {
+  outline: 2px solid #111827;
+  outline-offset: 3px;
+}
 
 @media (max-width: 600px) {
   header {
     flex-direction: column;
     gap: 12px;
+    text-align: center;
+  }
+
+  header nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  main {
+    padding: 25px 20px;
   }
 
   section h1 {
