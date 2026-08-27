@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Projects() {
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
@@ -12,11 +14,8 @@ function Projects() {
   const token = localStorage.getItem("token");
 
   const loadProjects = async () => {
-    setLoading(true);
-    setError("");
-
     try {
-      const response = await fetch("http://localhost:3000/projects", {
+      const response = await fetch(`${API_URL}/projects`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -30,14 +29,32 @@ function Projects() {
       setProjects(data);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    fetch(`${API_URL}/projects`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load projects");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setProjects(data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,14 +69,21 @@ function Projects() {
 
     try {
       const url = editingId
-        ? `http://localhost:3000/projects/${editingId}`
-        : "http://localhost:3000/projects";
+        ? `${API_URL}/projects/${editingId}`
+        : `${API_URL}/projects`;
 
       const method = editingId ? "PUT" : "POST";
 
       const body = editingId
-        ? { name, description }
-        : { name, description, user_id: 1 };
+        ? {
+            name,
+            description,
+          }
+        : {
+            name,
+            description,
+            user_id: 1,
+          };
 
       const response = await fetch(url, {
         method,
@@ -102,7 +126,7 @@ function Projects() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/projects/${id}`,
+        `${API_URL}/projects/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -125,11 +149,14 @@ function Projects() {
     <div>
       <h1>Projects</h1>
 
-      <h2>{editingId ? "Update Project" : "Create Project"}</h2>
+      <h2>
+        {editingId ? "Update Project" : "Create Project"}
+      </h2>
 
       <form onSubmit={handleSubmit}>
         <div>
           <label>Project Name:</label>
+
           <input
             type="text"
             value={name}
@@ -139,6 +166,7 @@ function Projects() {
 
         <div>
           <label>Description:</label>
+
           <input
             type="text"
             value={description}
@@ -165,13 +193,16 @@ function Projects() {
         projects.map((project) => (
           <div key={project.id}>
             <h3>{project.name}</h3>
+
             <p>{project.description}</p>
 
             <button onClick={() => handleEdit(project)}>
               Edit
             </button>
 
-            <button onClick={() => handleDelete(project.id)}>
+            <button
+              onClick={() => handleDelete(project.id)}
+            >
               Delete
             </button>
           </div>

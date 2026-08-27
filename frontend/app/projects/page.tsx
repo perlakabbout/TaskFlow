@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import ProjectCard from "../components/ProjectCard";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 type Project = {
   id: number;
   name: string;
@@ -14,7 +16,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/projects")
+    fetch(`${API_URL}/projects`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load projects");

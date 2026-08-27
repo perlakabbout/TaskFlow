@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +23,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,8 +42,9 @@ function Login() {
       }
 
       localStorage.setItem("token", data.token);
+
       navigate("/dashboard");
-    } catch (error) {
+    } catch {
       setError("Could not connect to the server.");
     } finally {
       setLoading(false);
@@ -55,6 +58,7 @@ function Login() {
       <form onSubmit={handleLogin}>
         <div>
           <label>Email:</label>
+
           <input
             type="email"
             value={email}
@@ -64,6 +68,7 @@ function Login() {
 
         <div>
           <label>Password:</label>
+
           <input
             type="password"
             value={password}

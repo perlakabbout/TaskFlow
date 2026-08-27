@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 type Task = {
   id: number;
   title: string;
@@ -14,7 +16,7 @@ export default function TasksPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/tasks")
+    fetch(`${API_URL}/tasks`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load tasks");

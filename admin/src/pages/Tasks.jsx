@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
@@ -14,11 +16,8 @@ function Tasks() {
   const token = localStorage.getItem("token");
 
   const loadTasks = async () => {
-    setLoading(true);
-    setError("");
-
     try {
-      const response = await fetch("http://localhost:3000/tasks", {
+      const response = await fetch(`${API_URL}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -32,14 +31,32 @@ function Tasks() {
       setTasks(data);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTasks();
-  }, []);
+    fetch(`${API_URL}/tasks`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load tasks");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setTasks(data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,8 +76,8 @@ function Tasks() {
 
     try {
       const url = editingId
-        ? `http://localhost:3000/tasks/${editingId}`
-        : "http://localhost:3000/tasks";
+        ? `${API_URL}/tasks/${editingId}`
+        : `${API_URL}/tasks`;
 
       const method = editingId ? "PUT" : "POST";
 
@@ -121,7 +138,7 @@ function Tasks() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/tasks/${id}`,
+        `${API_URL}/tasks/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -144,11 +161,14 @@ function Tasks() {
     <div>
       <h1>Tasks</h1>
 
-      <h2>{editingId ? "Update Task" : "Create Task"}</h2>
+      <h2>
+        {editingId ? "Update Task" : "Create Task"}
+      </h2>
 
       <form onSubmit={handleSubmit}>
         <div>
           <label>Task Title:</label>
+
           <input
             type="text"
             value={title}
@@ -158,6 +178,7 @@ function Tasks() {
 
         <div>
           <label>Description:</label>
+
           <input
             type="text"
             value={description}
@@ -167,6 +188,7 @@ function Tasks() {
 
         <div>
           <label>Status:</label>
+
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -180,6 +202,7 @@ function Tasks() {
         {!editingId && (
           <div>
             <label>Project ID:</label>
+
             <input
               type="number"
               value={projectId}

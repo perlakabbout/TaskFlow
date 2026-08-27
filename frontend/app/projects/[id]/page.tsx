@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 type Project = {
   id: number;
   name: string;
@@ -31,8 +33,8 @@ export default function ProjectDetailsPage() {
     const loadProjectDetails = async () => {
       try {
         const [projectsResponse, tasksResponse] = await Promise.all([
-          fetch("http://localhost:3000/projects"),
-          fetch("http://localhost:3000/tasks"),
+          fetch(`${API_URL}/projects`),
+          fetch(`${API_URL}/tasks`),
         ]);
 
         if (!projectsResponse.ok || !tasksResponse.ok) {
