@@ -5,83 +5,82 @@ import cors from "cors";
 import db from "./db.js";
 
 const app = express();
-const PORT = 3000;
 
-// =========================
-// MIDDLEWARE
-// =========================
+// Railway will provide PORT automatically in production.
+// Locally, TaskFlow will continue using port 3000.
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-
-// =========================
-// HOME
-// =========================
-
+// Home route
 app.get("/", (req, res) => {
   res.send("TaskFlow API is running!");
 });
 
-
-// =========================
 // REGISTER
-// =========================
-
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      message: "Please provide name, email and password",
+    });
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sql = `
-      INSERT INTO users (name, email, password)
-      VALUES (?, ?, ?)
-    `;
+    const sql =
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
 
-    db.query(
-      sql,
-      [name, email, hashedPassword],
-      (err, result) => {
-        if (err) {
-          if (err.code === "ER_DUP_ENTRY") {
-            return res.status(400).json({
-              message: "Email already exists",
-            });
-          }
+    db.query(sql, [name, email, hashedPassword], (err, result) => {
+      if (err) {
+        console.error(err);
 
-          return res.status(500).json({
-            error: err.message,
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({
+            message: "Email already exists",
           });
         }
 
-        res.status(201).json({
-          message: "User registered successfully",
-          user_id: result.insertId,
+        return res.status(500).json({
+          message: "Database error",
         });
       }
-    );
+
+      res.status(201).json({
+        message: "User registered successfully",
+        user_id: result.insertId,
+      });
+    });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
-      error: error.message,
+      message: "Server error",
     });
   }
 });
 
-
-// =========================
 // LOGIN
-// =========================
-
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Please provide email and password",
+    });
+  }
 
   const sql = "SELECT * FROM users WHERE email = ?";
 
   db.query(sql, [email], async (err, results) => {
     if (err) {
+      console.error(err);
+
       return res.status(500).json({
-        error: err.message,
+        message: "Database error",
       });
     }
 
@@ -117,62 +116,54 @@ app.post("/login", (req, res) => {
 
     res.json({
       message: "Login successful",
-      token: token,
+      token,
     });
   });
 });
 
-
-// =========================
-// JWT MIDDLEWARE
-// =========================
-
+// JWT middleware
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
     return res.status(401).json({
-      message: "No token provided",
+      message: "Access denied. No token provided.",
     });
   }
 
-  const parts = authHeader.split(" ");
+  const token = authHeader.split(" ")[1];
 
-  if (parts.length !== 2 || parts[0] !== "Bearer") {
+  if (!token) {
     return res.status(401).json({
-      message: "Invalid token format",
+      message: "Access denied. Invalid token.",
     });
   }
 
-  const token = parts[1];
-
-  jwt.verify(
-    token,
-    process.env.JWT_SECRET,
-    (err, decoded) => {
-      if (err) {
-        return res.status(403).json({
-          message: "Invalid or expired token",
-        });
-      }
-
-      req.user = decoded;
-      next();
-    }
-  );
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
+  }
 };
 
+// ========================
+// PROJECT ROUTES
+// ========================
 
-// =========================
-// PROJECTS CRUD
-// =========================
-
-// PUBLIC - GET all projects
+// Get all projects - Public
 app.get("/projects", (req, res) => {
-  db.query("SELECT * FROM projects", (err, results) => {
+  const sql = "SELECT * FROM projects";
+
+  db.query(sql, (err, results) => {
     if (err) {
+      console.error(err);
+
       return res.status(500).json({
-        error: err.message,
+        message: "Database error",
       });
     }
 
@@ -180,23 +171,28 @@ app.get("/projects", (req, res) => {
   });
 });
 
-
-// PROTECTED - CREATE project
+// Create project - Protected
 app.post("/projects", verifyToken, (req, res) => {
   const { name, description, user_id } = req.body;
 
-  const sql = `
-    INSERT INTO projects (name, description, user_id)
-    VALUES (?, ?, ?)
-  `;
+  if (!name || !description || !user_id) {
+    return res.status(400).json({
+      message: "Please complete all project fields.",
+    });
+  }
+
+  const sql =
+    "INSERT INTO projects (name, description, user_id) VALUES (?, ?, ?)";
 
   db.query(
     sql,
     [name, description, user_id],
     (err, result) => {
       if (err) {
+        console.error(err);
+
         return res.status(500).json({
-          error: err.message,
+          message: "Database error",
         });
       }
 
@@ -208,68 +204,82 @@ app.post("/projects", verifyToken, (req, res) => {
   );
 });
 
-
-// PROTECTED - UPDATE project
+// Update project - Protected
 app.put("/projects/:id", verifyToken, (req, res) => {
-  const { id } = req.params;
   const { name, description } = req.body;
+  const { id } = req.params;
 
-  const sql = `
-    UPDATE projects
-    SET name = ?, description = ?
-    WHERE id = ?
-  `;
+  if (!name || !description) {
+    return res.status(400).json({
+      message: "Please complete all project fields.",
+    });
+  }
 
-  db.query(
-    sql,
-    [name, description, id],
-    (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: err.message,
-        });
-      }
+  const sql =
+    "UPDATE projects SET name = ?, description = ? WHERE id = ?";
 
-      res.json({
-        message: "Project updated successfully",
+  db.query(sql, [name, description, id], (err, result) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Database error",
       });
     }
-  );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    res.json({
+      message: "Project updated successfully",
+    });
+  });
 });
 
-
-// PROTECTED - DELETE project
+// Delete project - Protected
 app.delete("/projects/:id", verifyToken, (req, res) => {
   const { id } = req.params;
 
-  db.query(
-    "DELETE FROM projects WHERE id = ?",
-    [id],
-    (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: err.message,
-        });
-      }
+  const sql = "DELETE FROM projects WHERE id = ?";
 
-      res.json({
-        message: "Project deleted successfully",
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Database error",
       });
     }
-  );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    res.json({
+      message: "Project deleted successfully",
+    });
+  });
 });
 
+// ========================
+// TASK ROUTES
+// ========================
 
-// =========================
-// TASKS CRUD
-// =========================
-
-// PUBLIC - GET all tasks
+// Get all tasks - Public
 app.get("/tasks", (req, res) => {
-  db.query("SELECT * FROM tasks", (err, results) => {
+  const sql = "SELECT * FROM tasks";
+
+  db.query(sql, (err, results) => {
     if (err) {
+      console.error(err);
+
       return res.status(500).json({
-        error: err.message,
+        message: "Database error",
       });
     }
 
@@ -277,34 +287,30 @@ app.get("/tasks", (req, res) => {
   });
 });
 
-
-// PROTECTED - CREATE task
+// Create task - Protected
 app.post("/tasks", verifyToken, (req, res) => {
-  const {
-    title,
-    description,
-    status,
-    project_id,
-  } = req.body;
+  const { title, description, status, project_id } = req.body;
 
-  const sql = `
-    INSERT INTO tasks
-    (title, description, status, project_id)
-    VALUES (?, ?, ?, ?)
-  `;
+  if (!title || !description || !project_id) {
+    return res.status(400).json({
+      message: "Please complete all task fields.",
+    });
+  }
+
+  const taskStatus = status || "Pending";
+
+  const sql =
+    "INSERT INTO tasks (title, description, status, project_id) VALUES (?, ?, ?, ?)";
 
   db.query(
     sql,
-    [
-      title,
-      description,
-      status,
-      project_id,
-    ],
+    [title, description, taskStatus, project_id],
     (err, result) => {
       if (err) {
+        console.error(err);
+
         return res.status(500).json({
-          error: err.message,
+          message: "Database error",
         });
       }
 
@@ -316,35 +322,35 @@ app.post("/tasks", verifyToken, (req, res) => {
   );
 });
 
-
-// PROTECTED - UPDATE task
+// Update task - Protected
 app.put("/tasks/:id", verifyToken, (req, res) => {
+  const { title, description, status, project_id } = req.body;
   const { id } = req.params;
 
-  const {
-    title,
-    description,
-    status,
-  } = req.body;
+  if (!title || !description || !project_id) {
+    return res.status(400).json({
+      message: "Please complete all task fields.",
+    });
+  }
 
-  const sql = `
-    UPDATE tasks
-    SET title = ?, description = ?, status = ?
-    WHERE id = ?
-  `;
+  const sql =
+    "UPDATE tasks SET title = ?, description = ?, status = ?, project_id = ? WHERE id = ?";
 
   db.query(
     sql,
-    [
-      title,
-      description,
-      status,
-      id,
-    ],
+    [title, description, status, project_id, id],
     (err, result) => {
       if (err) {
+        console.error(err);
+
         return res.status(500).json({
-          error: err.message,
+          message: "Database error",
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          message: "Task not found",
         });
       }
 
@@ -355,35 +361,34 @@ app.put("/tasks/:id", verifyToken, (req, res) => {
   );
 });
 
-
-// PROTECTED - DELETE task
+// Delete task - Protected
 app.delete("/tasks/:id", verifyToken, (req, res) => {
   const { id } = req.params;
 
-  db.query(
-    "DELETE FROM tasks WHERE id = ?",
-    [id],
-    (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          error: err.message,
-        });
-      }
+  const sql = "DELETE FROM tasks WHERE id = ?";
 
-      res.json({
-        message: "Task deleted successfully",
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Database error",
       });
     }
-  );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    res.json({
+      message: "Task deleted successfully",
+    });
+  });
 });
 
-
-// =========================
-// START SERVER
-// =========================
-
+// Start server
 app.listen(PORT, () => {
-  console.log(
-    `Server running on http://localhost:${PORT}`
-  );
+  console.log(`Server running on port ${PORT}`);
 });
