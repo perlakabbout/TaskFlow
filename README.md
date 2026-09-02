@@ -63,3 +63,15 @@ TaskFlow/
 ├── db.js           MySQL connection
 ├── database.sql    Database structure
 └── README.md
+```
+
+## Live Deployment
+
+### Backend API
+https://taskflow-production-d281.up.railway.app
+
+### Admin Dashboard
+https://benevolent-muffin-d4fbf4.netlify.app
+
+### Public Frontend
+https://taskflow-public.netlify.app
